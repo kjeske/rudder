@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netcoreapp3.0</TargetFramework>
         <Authors>Krzysztof Jeske</Authors>
-        <Version>0.0.1</Version>
+        <Version>0.0.2</Version>
         <Description>A state container for server-side Blazor.</Description>
         <Copyright>Copyright (c) 2019 Krzysztof Jeske</Copyright>
         <PackageProjectUrl>https://github.com/kjeske/ruddex</PackageProjectUrl>
@@ -11,6 +11,7 @@
         <RepositoryType>GIT</RepositoryType>
         <PackageTags>Blazor, State</PackageTags>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
