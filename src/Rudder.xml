@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Rudder</name>
+    </assembly>
+    <members>
+        <member name="T:Rudder.AsyncAction`1">
+            <summary>
+            Encapsulates a method that has a single parameter and returns a Task.
+            </summary>
+            <typeparam name="T1">Parameter type</typeparam>
+            <param name="arg1">Parameter value</param>
+        </member>
+        <member name="T:Rudder.IInitialState`1">
+            <summary>
+            Provides initial state for the application
+            </summary>
+            <typeparam name="TState"></typeparam>
+        </member>
+        <member name="M:Rudder.IInitialState`1.GetInitialState">
+            <summary>
+            Provides initial state for the application
+            </summary>
+            <returns>TState instance</returns>
+        </member>
+        <member name="T:Rudder.ILogicFlow">
+            <summary>
+            Provides handler for an action that will execute the business logic and dispatch further action if needed
+            </summary>
+        </member>
+        <member name="M:Rudder.ILogicFlow.OnNext(System.Object)">
+            <summary>
+            Handler for in incoming action for executing the business logic
+            </summary>
+            <param name="action">Action that is being currently processed</param>
+        </member>
+        <member name="T:Rudder.IStateFlow`1">
+            <summary>
+            Provides a handler for an action that will change the state accordingly to the processing action
+            </summary>
+            <typeparam name="TState"></typeparam>
+        </member>
+        <member name="M:Rudder.IStateFlow`1.Handle(`0,System.Object)">
+            <summary>
+            Handler for an action that will change the state accordingly to the processing action
+            </summary>
+            <param name="state">Current application state</param>
+            <param name="actionValue">Processing action</param>
+            <returns></returns>
+        </member>
+        <member name="T:Rudder.IStateMap`2">
+            <summary>
+            Provides a mapper of application state to the component state
+            </summary>
+            <typeparam name="TState">Application state</typeparam>
+            <typeparam name="TComponentState">ComponentState</typeparam>
+        </member>
+        <member name="M:Rudder.IStateMap`2.MapState(`0)">
+            <summary>
+            Maps the application state to the component state
+            </summary>
+            <param name="state">Application state</param>
+            <returns>Mapped component state</returns>
+        </member>
+        <member name="T:Rudder.Middleware.IStoreMiddleware">
+            <summary>
+            Provides a custom logic to execute when an action is being processed
+            </summary>
+        </member>
+        <member name="M:Rudder.Middleware.IStoreMiddleware.Run``1(``0)">
+            <summary>
+            Logic to execute when an action is being processed
+            </summary>
+            <typeparam name="T">Action type</typeparam>
+            <param name="action">Action instance</param>
+        </member>
+        <member name="T:Rudder.Middleware.JsLoggingStoreMiddleware">
+            <summary>
+            Provides JavaScript logging for dispatched actions in a console
+            </summary>
+        </member>
+        <member name="T:Rudder.Middleware.LogicFlowsStoreMiddleware">
+            <summary>
+            Provides logic flows execution
+            </summary>
+        </member>
+        <member name="M:Rudder.RudderExtensions.AddRudder``1(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Rudder.IRudderOptions{``0}})">
+            <summary>
+            Configures Rudder library
+            </summary>
+            <typeparam name="TState">Application state type</typeparam>
+            <param name="services">Services collection</param>
+            <param name="options">Configuration options</param>
+            <returns></returns>
+        </member>
+        <member name="T:Rudder.IRudderOptions`1">
+            <summary>
+            Provides the configuration for Rudder library
+            </summary>
+            <typeparam name="TState">Application state type</typeparam>
+        </member>
+        <member name="M:Rudder.IRudderOptions`1.AddStateFlow``1">
+            <summary>
+            Registers a state flow in a container
+            </summary>
+            <typeparam name="T">IStateFlow implementation</typeparam>
+        </member>
+        <member name="M:Rudder.IRudderOptions`1.AddStateFlows(System.Reflection.Assembly[])">
+            <summary>
+            Registers all state flows from calling assembly and additional assemblies
+            </summary>
+            <typeparam name="TState">Application state type</typeparam>
+        </member>
+        <member name="M:Rudder.IRudderOptions`1.AddLogicFlow``1">
+            <summary>
+            Registers a logic flow in a container
+            </summary>
+            <typeparam name="T">ILogicFlow implementation</typeparam>
+        </member>
+        <member name="M:Rudder.IRudderOptions`1.AddLogicFlows(System.Reflection.Assembly[])">
+            <summary>
+            Registers all logic flows from calling assembly and additional assemblies
+            </summary>
+            <typeparam name="TState">Application state type</typeparam>
+        </member>
+        <member name="M:Rudder.IRudderOptions`1.AddJsLogging">
+            <summary>
+            Adds JavaScript's console logging of processed actions (experimental)
+            </summary>
+        </member>
+        <member name="M:Rudder.IRudderOptions`1.AddMiddleware``1">
+            <summary>
+            Registers a StoreMiddleware
+            </summary>
+            <typeparam name="T">IStoreMiddleware implementation</typeparam>
+        </member>
+        <member name="T:Rudder.StateComponent`2">
+            <summary>
+            Component base class with access to the state and actions' dispatcher
+            </summary>
+            <typeparam name="TState">Application state type</typeparam>
+            <typeparam name="TComponentState">Component state type</typeparam>
+        </member>
+        <member name="P:Rudder.StateComponent`2.State">
+            <summary>
+            Component state
+            </summary>
+        </member>
+        <member name="M:Rudder.StateComponent`2.Put``1(``0)">
+            <summary>
+            Dispatches an action
+            </summary>
+            <typeparam name="T">Action type</typeparam>
+            <param name="action">Action instance</param>
+        </member>
+        <member name="T:Rudder.StateInitialized">
+            <summary>
+            Action dispatched after first render of the application
+            </summary>
+        </member>
+        <member name="T:Rudder.Store`1">
+            <summary>
+            Provides the application state and dispatcher for actions
+            </summary>
+            <typeparam name="TState"></typeparam>
+        </member>
+        <member name="P:Rudder.Store`1.State">
+            <summary>
+            Application state
+            </summary>
+        </member>
+        <member name="M:Rudder.Store`1.Put``1(``0)">
+            <summary>
+            Actions dispatcher
+            </summary>
+            <typeparam name="T">Action type</typeparam>
+            <param name="action">Action instance</param>
+        </member>
+        <member name="M:Rudder.Store`1.Subscribe(System.Action{`0})">
+            <summary>
+            Subscribes for a state change
+            </summary>
+            <param name="callback">State change callback</param>
+        </member>
+        <member name="M:Rudder.Store`1.Unsubscribe(System.Action{`0})">
+            <summary>
+            Unsubscribes from a state change
+            </summary>
+            <param name="callback">State change callback</param>
+        </member>
+        <member name="T:Rudder.StoreContainer`1">
+            <summary>
+            Component used for store initialization
+            </summary>
+            <typeparam name="TState">State type</typeparam>
+        </member>
+        <member name="M:Rudder.WithExtension.With``1(``0,System.Action{``0})">
+            <summary>
+            Returns new shallow copy of obj with changes defined by mutator.
+            </summary>
+            <param name="obj">Object to copy</param>
+            <param name="mutator">Changes to apply</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
