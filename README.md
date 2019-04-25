@@ -186,3 +186,39 @@ public class ItemsSaga : ISaga
 * Sagas are the place to execute our business logic, that's why it's the right place to inject the services to
 * The asynchronous OnNext method is responsible to handle the actions and execute corresponding logic
 * During handling one trigger action (LoadItems) we can dispatch many other actions, like Request or Success that will be handled by reducers
+
+AppService is an example service that fetches the data from database. For the training purposes we can implement it like:
+
+```C#
+public interface IAppService
+{
+    Task<List<string>> GetItems();
+}
+
+public class AppService : IAppService
+{
+    public async Task<List<string>> GetItems()
+    {
+        await Task.Delay(1000);
+        return new List<string> { "Item1", "Item2" };
+    }
+}
+```
+And register in container.
+
+## Startup
+
+Having all the pieces in place we can configure the application startup including dependency injection.
+
+In Startup.cs:
+```C#
+public void ConfigureServices(IServiceCollection services)
+{
+    // ...
+    
+    var reducers = new[] { typeof(ItemsReducer) };
+    var sagas = new[] { typeof(ItemsSaga) };
+    services.AddRazorState(AppState.GetInitialState, reducers, sagas);
+}
+
+```
