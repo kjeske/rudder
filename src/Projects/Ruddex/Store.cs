@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,6 +12,7 @@ namespace Ruddex
         private readonly IEnumerable<IReducer<TState>> _reducers;
         private readonly Func<IEnumerable<ISaga>> _sagas;
         private readonly List<Action<TState>> _subscribers = new List<Action<TState>>();
+        private static readonly object Lock = new object();
 
         public Store(Func<TState> getInitialState, IEnumerable<IReducer<TState>> reducers, Func<IEnumerable<ISaga>> sagas)
         {
@@ -20,16 +23,14 @@ namespace Ruddex
 
         public TState State { get; private set; }
 
-        public void SetState(TState state)
-        {
-            State = state;
-        }
-
         public void Put(object action)
         {
-            SetState(_reducers.Aggregate(State, (state, reducer) => reducer.Handle(state, action)));
+            lock (Lock)
+            {
+                State = _reducers.Aggregate(State, (state, reducer) => reducer.Handle(state, action));
+                NotifyStateSubscribers();
+            }
             RunSagas(action);
-            NotifyStateSubscribers();
         }
 
         public void Subscribe(Action<TState> action) =>
