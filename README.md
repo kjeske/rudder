@@ -109,6 +109,7 @@ There are several things to mention here:
 * Having StateComponent<AppState> as a base class gives us access to:
     - `State` property - our AppState instance
     - `Put` method - method used to dispatch actions
+    - Rerendering the component whenever change in the AppState occurs
 * The `LoadItems` method is attached to the `Load items` button. It's role is to dispatch an instance of the Actions.LoadItems action.
 
 ## Reducers
@@ -142,3 +143,41 @@ public class ItemsReducer : IReducer<AppState>
 * Whenever action is dispatched in the system, the reducer's Hanlder method will be called
 * The `Handle` method is responsible to react on the actions and change the state where needed
 * There can be many reducers, each responsible for its own area
+* We are mutating the existing state here, which is not recommended and is used only for demonstrational purposes. It's adviced to create a new instance of state whenever the change is needed. It can be achieved manually or by tools like AutoMapper.
+    
+## Saga
+
+Sagas are used to run the side-effects and dispatch needed actions during that process. It will be used to exectute the business logic in our application.
+
+```C#
+public class ItemsSaga : ISaga
+{
+    private readonly Store<AppState> _store;
+    private readonly IAppService _appService;
+
+    public ItemsSaga(Store<AppState> store, IAppService appService)
+    {
+        _store = store;
+        _appService = appService;
+    }
+
+    public async Task OnNext(object actionValue)
+    {
+        switch (actionValue)
+        {
+            case Actions.LoadItems _:
+                await LoadItems();
+                break;
+        }
+    }
+
+    private async Task FetchItems()
+    {
+        _store.Put(new Actions.LoadItems.Request());
+
+        var result = await _appService.GetItems();
+
+        _store.Put(new Actions.LoadItems.Success { Items = result.ToList() });
+    }
+}
+```
