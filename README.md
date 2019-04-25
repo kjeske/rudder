@@ -11,7 +11,7 @@ The main features of Ruddex:
 # Getting started
 
 ## Installation
-Add the Ruddex nuget package to your application. One of the methods is to execute following statement from the command line in the project folder:
+Add the Ruddex nuget package to your application. One of the methods is to execute following command from the command line in the project folder:
 ```
 dotnet add package Ruddex
 ```
@@ -35,3 +35,17 @@ public class AppState
 ```
 
 We also added GetInitialState static method that will be needed later during app startup setup.
+
+## App component
+
+App component is an initial component for the whole application. It can look like that:
+
+```razor
+@inject Store<AppState> store
+
+<StoreProvider Store="store">
+    <Router AppAssembly="typeof(Startup).Assembly" />
+</StoreProvider>
+```
+
+The Router attribute comes from MVC and is present in the Blazor template as well. In order to make Rudex working, the Router attribute has to be surrounded by StoreProvider component with Store parameter. Store is a heart of the whole library - it keeps the application state and all the mechanisms to dispatch messages. Thanks to StoreProvider component, store instance will be available to the descendant components, when needed.
