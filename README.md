@@ -222,3 +222,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 
 ```
+
+* AppState.GetInitialState is a pointer to a method we created before that creates the initial state
+* `reducers` is an array of Reducer types we created
+* `sagas` is an array of Saga types we created
