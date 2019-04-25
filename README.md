@@ -145,7 +145,7 @@ public class ItemsReducer : IReducer<AppState>
 * There can be many reducers, each responsible for its own area
 * We are mutating the existing state here, which is not recommended and is used only for demonstrational purposes. It's adviced to create a new instance of state whenever the change is needed. It can be achieved manually or by tools like AutoMapper.
     
-## Saga
+## Sagas
 
 Sagas are used to run the side-effects and dispatch needed actions during that process. It will be used to exectute the business logic in our application.
 
@@ -181,3 +181,8 @@ public class ItemsSaga : ISaga
     }
 }
 ```
+
+* Sagas have to implement ISaga
+* Sagas are the place to execute our business logic, that's why it's the right place to inject the services to
+* The asynchronous OnNext method is responsible to handle the actions and execute corresponding logic
+* During handling one trigger action (LoadItems) we can dispatch many other actions, like Request or Success that will be handled by reducers
