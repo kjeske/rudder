@@ -38,7 +38,7 @@ We also added GetInitialState static method that will be needed later during app
 
 ## App component
 
-App component is an initial component for the whole application. It can look like that:
+App.razor component is an initial component for the whole application. Let's change it to:
 
 ```razor
 @inject Store<AppState> store
@@ -49,3 +49,63 @@ App component is an initial component for the whole application. It can look lik
 ```
 
 The Router attribute comes from MVC and is present in the Blazor template as well. In order to make Rudex working, the Router attribute has to be surrounded by StoreProvider component with Store parameter. Store is a heart of the whole library - it keeps the application state and all the mechanisms to dispatch messages. Thanks to StoreProvider component, store instance will be available to the descendant components, when needed.
+
+At that stage we also define the application state type, which is AppState. The Store<AppState> is injected using dependency injection. The registration will be setup in further steps.
+
+## Actions
+
+Actions are events that float thorugh the system and are handled by reducers and sagas. Reducers are changing the state and sagas are handling the side effects and are mainly responsible for business logic.
+
+Actions can be of any type, but preferrably they should be custom classes in order to pass some additional data when needed.
+
+```C#
+public class Actions
+{
+    public class LoadItems
+    {
+        public class Request { }
+
+        public class Success
+        {
+            public List<string> Items { get; set; }
+        }
+    }
+}
+```
+
+* `LoadItems` action is to trigger fetching the items from some storage, for example database
+* `LoadItems.Request` action is to inform that the request to get the data has started
+* `LoadItems.Success` action is to inform that getting the data is finished. It contains Items property with retrieved data
+
+## First custom component
+
+Let's create a custom component and name it Items.razor. It will show the elements from our state and have a button to load those elements. When the elements are being fetched, the loading indication should be shown.
+
+```razor
+@inherits StateComponent<AppState>
+
+<h1>App</h1>
+
+@if (State.IsFetching)
+{
+    <p>Is loading</p>
+} else {
+    foreach (var item in State.Items)
+    {
+        <p>item</p>
+    }
+
+    <button onclick="LoadItems">Load items</button>
+}
+
+@functions {
+    void LoadItems() => Put(new Actions.LoadItems());
+}
+```
+
+There are several things to mention here:
+* Whenever we want to use our state or dispatch an action,  we need to inherit from StateComponent<AppState>
+* Having StateComponent<AppState> as a base class gives us access to:
+    - `State` property - our AppState instance
+    - `Put` method - method used to dispatch actions
+* The `LoadItems` method is attached to the `Load items` button. It's role is to dispatch an instance of the Actions.LoadItems action.
