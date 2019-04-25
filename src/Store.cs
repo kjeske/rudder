@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,8 +27,8 @@ namespace Ruddex
             {
                 State = _reducers.Aggregate(State, (state, reducer) => reducer.Handle(state, action));
                 NotifyStateSubscribers();
+                RunSagas(action);
             }
-            RunSagas(action);
         }
 
         public void Subscribe(Action<TState> action) =>
