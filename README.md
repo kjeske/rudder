@@ -76,6 +76,7 @@ public class Actions
 * `LoadItems` action is to trigger fetching the items from some storage, for example database
 * `LoadItems.Request` action is to inform that the request to get the data has started
 * `LoadItems.Success` action is to inform that getting the data is finished. It contains Items property with retrieved data
+* The structure of the actions classes is arbitrary.
 
 ## First custom component
 
@@ -109,3 +110,35 @@ There are several things to mention here:
     - `State` property - our AppState instance
     - `Put` method - method used to dispatch actions
 * The `LoadItems` method is attached to the `Load items` button. It's role is to dispatch an instance of the Actions.LoadItems action.
+
+## Reducers
+
+As mentioned before, reducers are classes used to change the state accordingly to coming actions.
+
+```C#
+public class ItemsReducer : IReducer<AppState>
+{
+    public AppState Handle(AppState appState, object actionValue)
+    {
+        switch (actionValue)
+        {
+            case Actions.LoadItems.Request _:
+                appState.IsFetching = true;
+                return appState;
+
+            case Actions.LoadItems.Success action:
+                appState.IsFetching = false;
+                appState.Items = action.Items;
+                return appState;
+
+            default:
+                return appState;
+        }
+    }
+}
+```
+
+* Reducer has to implement IReducer<AppState> where AppState is our application state object type
+* Whenever action is dispatched in the system, the reducer's Hanlder method will be called
+* The `Handle` method is responsible to react on the actions and change the state where needed
+* There can be many reducers, each responsible for its own area
