@@ -176,13 +176,13 @@
             <typeparam name="T">Action type</typeparam>
             <param name="action">Action instance</param>
         </member>
-        <member name="M:Rudder.Store`1.Subscribe(System.Action{`0})">
+        <member name="M:Rudder.Store`1.Subscribe(System.Func{`0,System.Threading.Tasks.Task})">
             <summary>
             Subscribes for a state change
             </summary>
             <param name="callback">State change callback</param>
         </member>
-        <member name="M:Rudder.Store`1.Unsubscribe(System.Action{`0})">
+        <member name="M:Rudder.Store`1.Unsubscribe(System.Func{`0,System.Threading.Tasks.Task})">
             <summary>
             Unsubscribes from a state change
             </summary>

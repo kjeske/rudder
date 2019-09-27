@@ -18,9 +18,9 @@ namespace Rudder
         private IInitialState<TState> InitialState { get; set; }
 
         [Parameter]
-        private RenderFragment ChildContent { get; set; }
+        public RenderFragment ChildContent { get; set; }
 
-        void IComponent.Configure(RenderHandle renderHandle)
+        void IComponent.Attach(RenderHandle renderHandle)
         {
             if (!_renderHandle.IsInitialized)
             {
@@ -28,7 +28,7 @@ namespace Rudder
             }
         }
 
-        async Task IComponent.SetParametersAsync(ParameterCollection parameters)
+        async Task IComponent.SetParametersAsync(ParameterView parameters)
         {
             parameters.SetParameterProperties(this);
             await Store.Initialize(InitialState.GetInitialState);

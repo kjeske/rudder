@@ -3,7 +3,7 @@
         <TargetFramework>netcoreapp3.0</TargetFramework>
         <Authors>Krzysztof Jeske</Authors>
         <Build>$([System.DateTime]::op_Subtraction($([System.DateTime]::get_Now().get_Date()),$([System.DateTime]::new(2000,1,1))).get_TotalDays())</Build>
-        <Version>1.0.0-preview1-$(Build)</Version>
+        <Version>1.0.0</Version>
         <Description>A state container for server-side Blazor.</Description>
         <Copyright>Copyright (c) 2019 Krzysztof Jeske</Copyright>
         <PackageProjectUrl>https://github.com/kjeske/rudder</PackageProjectUrl>
@@ -20,7 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.0.0-preview6.19307.2" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.0.0-preview6.19304.6" />
+      <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.0.0" />
     </ItemGroup>
 </Project>

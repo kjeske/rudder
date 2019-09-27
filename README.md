@@ -1,5 +1,5 @@
 # Rudder
-Rudder is a state container for server-side Blazor. It's still in a preview, same as .NET Core 3 which is the required framework version.
+Rudder is a state container for server-side Blazor.
 
 The main features of Rudder:
 * One state object per whole application
@@ -38,18 +38,18 @@ Sample application can be found here: https://github.com/kjeske/rudder-example
 
 # Getting started with new application
 
-Rudder works with applications using Server-Side Blazor, which is a part of ASP<span></span>.NET Core in .NET Core 3.0 Preview 5+
+Rudder works with applications using Server-Side Blazor, which is a part of ASP<span></span>.NET Core in .NET Core 3.0
 
 ## Installation
 Add the Rudder NuGet package to your application.
 
 Command line:
 ```
-dotnet add package Rudder --version 1.0.0-*
+dotnet add package Rudder
 ```
 Package Manager Console:
 ```
-Install-Package Rudder -IncludePrerelease
+Install-Package Rudder
 ```
 
 ## AppState

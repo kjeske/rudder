@@ -32,20 +32,20 @@ namespace Rudder
         /// <param name="action">Action instance</param>
         protected Task Put<T>(T action) => Store.Put(action);
 
-        protected override void OnInit()
+        protected override void OnInitialized()
         {
             _state = StateMapper.MapState(Store.State);
             Store.Subscribe(UpdateState);
         }
 
-        private void UpdateState(TState state)
+        private async Task UpdateState(TState state)
         {
             var newState = StateMapper.MapState(state);
 
             if (!newState.Equals(State))
             {
                 _state = newState;
-                Invoke(StateHasChanged);
+                await InvokeAsync(StateHasChanged);
             }
         }
 

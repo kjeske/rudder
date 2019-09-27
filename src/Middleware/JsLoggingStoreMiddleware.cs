@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
 
@@ -12,8 +11,6 @@ namespace Rudder.Middleware
     {
         private readonly IJSRuntime _jsRuntime;
 
-        private const int JsInvokeTimeout = 100;
-
         public JsLoggingStoreMiddleware(IJSRuntime jsRuntime)
         {
             _jsRuntime = jsRuntime;
@@ -23,7 +20,7 @@ namespace Rudder.Middleware
         {
             try
             {
-                await WithTimeout(_jsRuntime.InvokeAsync<object>("console.log", $"%c{GetTypeName(typeof(TAction))}", "font-weight: bold;", action), JsInvokeTimeout);
+                await _jsRuntime.InvokeAsync<object>("console.log", $"%c{GetTypeName(typeof(TAction))}", "font-weight: bold;", action);
             }
             catch
             {
@@ -33,8 +30,5 @@ namespace Rudder.Middleware
 
         private static string GetTypeName(Type type) =>
             type.FullName.Substring(type.Namespace.Length + 1).Replace("+", ".");
-
-        private static Task WithTimeout(Task task, int timeout) =>
-            Task.WhenAny(task, Task.Delay(timeout));
     }
 }

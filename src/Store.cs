@@ -15,7 +15,7 @@ namespace Rudder
     {
         private readonly IEnumerable<IStateFlow<TState>> _stateFlows;
         private readonly List<IStoreMiddleware> _middlewareList;
-        private ImmutableList<Action<TState>> _subscribers = ImmutableList<Action<TState>>.Empty;
+        private ImmutableList<Func<TState, Task>> _subscribers = ImmutableList<Func<TState, Task>>.Empty;
 
         public Store(IEnumerable<IStateFlow<TState>> stateFlows, IEnumerable<IStoreMiddleware> middlewareList)
         {
@@ -48,7 +48,7 @@ namespace Rudder
             if (!newState.Equals(State))
             {
                 State = newState;
-                NotifyStateSubscribers();
+                await NotifyStateSubscribers();
             }
 
             await Task.WhenAll(_middlewareList.Select(middleware => middleware.Run(action)).ToArray());
@@ -58,17 +58,17 @@ namespace Rudder
         /// Subscribes for a state change
         /// </summary>
         /// <param name="callback">State change callback</param>
-        public void Subscribe(Action<TState> callback) =>
+        public void Subscribe(Func<TState, Task> callback) =>
             _subscribers = _subscribers.Add(callback);
 
         /// <summary>
         /// Unsubscribes from a state change
         /// </summary>
         /// <param name="callback">State change callback</param>
-        public void Unsubscribe(Action<TState> callback) =>
+        public void Unsubscribe(Func<TState, Task> callback) =>
             _subscribers = _subscribers.Remove(callback);
 
-        private void NotifyStateSubscribers() =>
-            _subscribers.ForEach(subscriber => subscriber(State));
+        private async Task NotifyStateSubscribers() =>
+            await Task.WhenAll(_subscribers.Select(subscriber => subscriber(State)));
     }
 }
