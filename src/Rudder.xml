@@ -11,18 +11,6 @@
             <typeparam name="T1">Parameter type</typeparam>
             <param name="arg1">Parameter value</param>
         </member>
-        <member name="T:Rudder.IInitialState`1">
-            <summary>
-            Provides initial state for the application
-            </summary>
-            <typeparam name="TState"></typeparam>
-        </member>
-        <member name="M:Rudder.IInitialState`1.GetInitialState">
-            <summary>
-            Provides initial state for the application
-            </summary>
-            <returns>TState instance</returns>
-        </member>
         <member name="T:Rudder.ILogicFlow">
             <summary>
             Provides handler for an action that will execute the business logic and dispatch further action if needed
@@ -48,19 +36,17 @@
             <param name="actionValue">Processing action</param>
             <returns></returns>
         </member>
-        <member name="T:Rudder.IStateMap`2">
+        <member name="T:Rudder.IStateInitializer`1">
             <summary>
-            Provides a mapper of application state to the component state
+            Provides initial state for the application
             </summary>
-            <typeparam name="TState">Application state</typeparam>
-            <typeparam name="TComponentState">ComponentState</typeparam>
+            <typeparam name="TState"></typeparam>
         </member>
-        <member name="M:Rudder.IStateMap`2.MapState(`0)">
+        <member name="M:Rudder.IStateInitializer`1.GetInitialStateAsync">
             <summary>
-            Maps the application state to the component state
+            Provides initial state for the application
             </summary>
-            <param name="state">Application state</param>
-            <returns>Mapped component state</returns>
+            <returns>TState instance</returns>
         </member>
         <member name="T:Rudder.Middleware.IStoreMiddleware">
             <summary>
@@ -134,19 +120,21 @@
             </summary>
             <typeparam name="T">IStoreMiddleware implementation</typeparam>
         </member>
-        <member name="T:Rudder.StateComponent`2">
+        <member name="T:Rudder.StateComponent`1">
             <summary>
             Component base class with access to the state and actions' dispatcher
             </summary>
             <typeparam name="TState">Application state type</typeparam>
             <typeparam name="TComponentState">Component state type</typeparam>
         </member>
-        <member name="P:Rudder.StateComponent`2.State">
+        <member name="M:Rudder.StateComponent`1.PutAsync``1(``0)">
             <summary>
-            Component state
+            Dispatches an action
             </summary>
+            <typeparam name="T">Action type</typeparam>
+            <param name="action">Action instance</param>
         </member>
-        <member name="M:Rudder.StateComponent`2.Put``1(``0)">
+        <member name="M:Rudder.StateComponent`1.Put``1(``0)">
             <summary>
             Dispatches an action
             </summary>
@@ -169,6 +157,13 @@
             Application state
             </summary>
         </member>
+        <member name="M:Rudder.Store`1.PutAsync``1(``0)">
+            <summary>
+            Actions dispatcher
+            </summary>
+            <typeparam name="T">Action type</typeparam>
+            <param name="action">Action instance</param>
+        </member>
         <member name="M:Rudder.Store`1.Put``1(``0)">
             <summary>
             Actions dispatcher
@@ -176,31 +171,18 @@
             <typeparam name="T">Action type</typeparam>
             <param name="action">Action instance</param>
         </member>
-        <member name="M:Rudder.Store`1.Subscribe(System.Func{`0,System.Threading.Tasks.Task})">
+        <member name="M:Rudder.Store`1.Subscribe``1(System.Func{`0,``0},System.Action)">
             <summary>
             Subscribes for a state change
             </summary>
-            <param name="callback">State change callback</param>
-        </member>
-        <member name="M:Rudder.Store`1.Unsubscribe(System.Func{`0,System.Threading.Tasks.Task})">
-            <summary>
-            Unsubscribes from a state change
-            </summary>
-            <param name="callback">State change callback</param>
+            <param name="mapper">State change callback</param>
+            <param name="notify">Notification of state changes</param>
         </member>
         <member name="T:Rudder.StoreContainer`1">
             <summary>
             Component used for store initialization
             </summary>
             <typeparam name="TState">State type</typeparam>
-        </member>
-        <member name="M:Rudder.WithExtension.With``1(``0,System.Action{``0})">
-            <summary>
-            Returns new shallow copy of obj with changes defined by mutator.
-            </summary>
-            <param name="obj">Object to copy</param>
-            <param name="mutator">Changes to apply</param>
-            <returns></returns>
         </member>
     </members>
 </doc>

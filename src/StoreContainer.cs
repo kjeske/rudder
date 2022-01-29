@@ -15,7 +15,7 @@ namespace Rudder
         private Store<TState> Store { get; set; }
 
         [Inject]
-        private IInitialState<TState> InitialState { get; set; }
+        private IStateInitializer<TState> StateInitializer { get; set; }
 
         [Parameter]
         public RenderFragment ChildContent { get; set; }
@@ -31,11 +31,11 @@ namespace Rudder
         async Task IComponent.SetParametersAsync(ParameterView parameters)
         {
             parameters.SetParameterProperties(this);
-            await Store.Initialize(InitialState.GetInitialState);
+            await Store.Initialize(StateInitializer.GetInitialStateAsync);
             _renderHandle.Render(builder => builder.AddContent(0, ChildContent));
         }
 
         Task IHandleAfterRender.OnAfterRenderAsync() =>
-            Store.Put(new StateInitialized());
+            Store.PutAsync(new StateInitialized());
     }
 }

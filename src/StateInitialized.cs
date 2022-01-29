@@ -3,7 +3,5 @@
     /// <summary>
     /// Action dispatched after first render of the application
     /// </summary>
-    public class StateInitialized
-    {
-    }
+    public record StateInitialized;
 }

@@ -6,12 +6,12 @@ namespace Rudder
     /// Provides initial state for the application
     /// </summary>
     /// <typeparam name="TState"></typeparam>
-    public interface IInitialState<TState>
+    public interface IStateInitializer<TState>
     {
         /// <summary>
         /// Provides initial state for the application
         /// </summary>
         /// <returns>TState instance</returns>
-        Task<TState> GetInitialState();
+        Task<TState> GetInitialStateAsync();
     }
 }

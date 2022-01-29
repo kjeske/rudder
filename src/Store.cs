@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Rudder.Middleware;
 
 namespace Rudder
@@ -15,7 +11,9 @@ namespace Rudder
     {
         private readonly IEnumerable<IStateFlow<TState>> _stateFlows;
         private readonly List<IStoreMiddleware> _middlewareList;
-        private ImmutableList<Func<TState, Task>> _subscribers = ImmutableList<Func<TState, Task>>.Empty;
+        private readonly List<Subscriber> _subscribers = new();
+        private TState? _state;
+        private readonly object _lockObject = new();
 
         public Store(IEnumerable<IStateFlow<TState>> stateFlows, IEnumerable<IStoreMiddleware> middlewareList)
         {
@@ -26,14 +24,30 @@ namespace Rudder
         /// <summary>
         /// Application state
         /// </summary>
-        public TState State { get; private set; }
+        public TState State => _state!;
 
-        internal async Task Initialize(Func<Task<TState>> func)
+        internal async Task Initialize(Func<Task<TState>> func) =>
+            _state ??= await func();
+
+        /// <summary>
+        /// Actions dispatcher
+        /// </summary>
+        /// <typeparam name="T">Action type</typeparam>
+        /// <param name="action">Action instance</param>
+        public async Task PutAsync<T>(T action)
         {
-            if (State == null)
+            lock (_lockObject)
             {
-                State = await func();
+                var newState = _stateFlows.Aggregate(State, (state, stateFlow) => stateFlow.Handle(state, action!));
+
+                if (!newState.Equals(State))
+                {
+                    _state = newState;
+                    NotifyStateSubscribers();
+                }
             }
+
+            await Task.WhenAll(_middlewareList.Select(middleware => middleware.Run(action)).ToArray());
         }
 
         /// <summary>
@@ -41,34 +55,60 @@ namespace Rudder
         /// </summary>
         /// <typeparam name="T">Action type</typeparam>
         /// <param name="action">Action instance</param>
-        public async Task Put<T>(T action)
-        {
-            var newState = _stateFlows.Aggregate(State, (state, stateFlow) => stateFlow.Handle(state, action));
-
-            if (!newState.Equals(State))
-            {
-                State = newState;
-                await NotifyStateSubscribers();
-            }
-
-            await Task.WhenAll(_middlewareList.Select(middleware => middleware.Run(action)).ToArray());
-        }
+        public void Put<T>(T action) =>
+            Task.Run(() => PutAsync(action));
 
         /// <summary>
         /// Subscribes for a state change
         /// </summary>
-        /// <param name="callback">State change callback</param>
-        public void Subscribe(Func<TState, Task> callback) =>
-            _subscribers = _subscribers.Add(callback);
+        /// <param name="mapper">State change callback</param>
+        /// <param name="notify">Notification of state changes</param>
+        public Action Subscribe<T>(Func<TState, T> mapper, Action notify)
+        {
+            var lastState = mapper(State);
 
-        /// <summary>
-        /// Unsubscribes from a state change
-        /// </summary>
-        /// <param name="callback">State change callback</param>
-        public void Unsubscribe(Func<TState, Task> callback) =>
-            _subscribers = _subscribers.Remove(callback);
+            var subscriber = new Subscriber(
+                oldValue: lastState,
+                notify: notify,
+                mapState: state => mapper(state)
+            );
 
-        private async Task NotifyStateSubscribers() =>
-            await Task.WhenAll(_subscribers.Select(subscriber => subscriber(State)));
+            _subscribers.Add(subscriber);
+
+            return () => _subscribers.Remove(subscriber);
+        }
+
+        private void NotifyStateSubscribers()
+        {
+            var notifiers = new List<Action>();
+
+            foreach (var subscriber in _subscribers)
+            {
+                var newValue = subscriber.MapState(State);
+                if (newValue is null && subscriber.OldValue is null || newValue is not null && newValue.Equals(subscriber.OldValue))
+                {
+                    continue;
+                }
+
+                subscriber.OldValue = newValue;
+                notifiers.Add(subscriber.Notify);
+            }
+
+            notifiers.Distinct().ToList().ForEach(refresh => refresh());
+        }
+
+        private class Subscriber
+        {
+            public Subscriber(object? oldValue, Action notify, Func<TState, object?> mapState)
+            {
+                OldValue = oldValue;
+                Notify = notify;
+                MapState = mapState;
+            }
+
+            public Action Notify { get; init; }
+            public Func<TState, object?> MapState { get; init; }
+            public object? OldValue { get; set; }
+        }
     }
 }

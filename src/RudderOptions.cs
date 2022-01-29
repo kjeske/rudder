@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Rudder.Middleware;
 
@@ -48,7 +45,7 @@ namespace Rudder
         /// <typeparam name="T">IStoreMiddleware implementation</typeparam>
         IRudderOptions<TState> AddMiddleware<T>() where T : class, IStoreMiddleware;
 
-        IRudderOptions<TState> AddStateInitializer<T>() where T : class, IInitialState<TState>;
+        IRudderOptions<TState> AddStateInitializer<T>() where T : class, IStateInitializer<TState>;
     }
 
     internal class RudderOptions<TState> : IRudderOptions<TState> where TState : class
@@ -62,9 +59,9 @@ namespace Rudder
             _callingAssembly = callingAssembly;
         }
 
-        public IRudderOptions<TState> AddStateInitializer<T>() where T : class, IInitialState<TState>
+        public IRudderOptions<TState> AddStateInitializer<T>() where T : class, IStateInitializer<TState>
         {
-            _services.AddScoped<IInitialState<TState>, T>();
+            _services.AddScoped<IStateInitializer<TState>, T>();
 
             return this;
         }

@@ -1,11 +1,14 @@
 # Rudder
-Rudder is a state container for server-side Blazor.
+Rudder is a state container for Blazor.
 
 The main features of Rudder:
 * One state object per whole application
-* The interactions from the user interface dispatch actions
-* Changes to the main app state are done only in state flows. State flows are responsible for taking the dispatched actions and depending of the type and data of those actions changing the state accordingly.
+* The user interface interactions dispatch actions
+* Changes to the main app state are done only in the state flows. State flows are responsible for taking the dispatched actions and depending of the type and data of those actions changing the state accordingly.
 * Business logic is triggered in logic flows. Logic flows are responsible for taking the dispatched actions, executing business logic and optionally dispatching another actions during that process.
+* Works with client-side and server-side Blazor.
+
+[Example of a Blazor project using Rudder](https://github.com/kjeske/rudder-example)
 
 # Purpose
 Rudder makes it easier to maintain the application state and user interactions. Rudder brings:
@@ -15,30 +18,26 @@ Rudder makes it easier to maintain the application state and user interactions. 
 * Views don't contain complex logic and are responsible mostly for rendering and dispatching simple actions objects
 
 # How it works
-1. There is one state object that represents the whole application UI state in all the modules that are available for the user.
+1. There is one state object that represents the whole application UI state.
 1. Application state is wrapped in a `Store` class that apart from keeping the state is also responsible for dispatching the actions. Actions are objects that describe events together with corresponding event data.
-1. Views are rendered using the Blazor components. In Rudder we can distinguish two types of components:
-   - Components that have access to the `Store` - called StateComponents, equivalent of "container components".
-   - Components without the access  to the `Store` - just regular components, equivalent of "presentational components".
+1. Views are rendered using the Razor components. In Rudder we can distinguish two types of components:
+   - Components that have access to the `Store` - called StateComponents.
+   - Components without the access  to the `Store` - just regular components.
 1. User interactions, like `onclick`, are handled in components and then can be transformed into appropriate action objects that describe the user intention (for example ReloadList action) and then dispatched.
 1. Every dispatched action triggers:
    * State flows that are responsible for changing the state accordingly to the processing action. Example:
      - If currently processing action is `Actions.GetItems.Request`, then set `IsFetching` state property to `true`.
    * Logic flows that are responsible for handling the business logic and dispatching further actions during that process. Example:
-     - If currently processing action is `Actions.GetItems.Invoke` then:
+     - If currently processing action is `Actions.GetItems` then:
        - Dispatch `Actions.GetItems.Request` action
        - Load items from the database
        - Dispatch `Actions.GetItems.Success` action with items data if the request was successful.
        - Dispatch `Actions.GetItems.Failure` action with error message if the request was not successful.
-1. Every application state change triggers a call to each visible `StateComponent` in order to check if the state that they use has changed as well (components use only a part the application state). If so, such component will be rerendered.
-
-# Sample application
-
-Sample application can be found here: https://github.com/kjeske/rudder-example
+1. Every application state's change triggers the rerendering only of those `StateComponents` which subscribe to the changed property of the state.
 
 # Getting started with new application
 
-Rudder works with applications using Server-Side Blazor, which is a part of ASP<span></span>.NET Core in .NET Core 3.0
+Rudder works with applications using Blazor, which is a part of .NET 6
 
 ## Installation
 Add the Rudder NuGet package to your application.
@@ -56,28 +55,25 @@ Install-Package Rudder
 We will start with creating first draft of our application's state in a class. It will be used to keep the data used by the UI.
 
 ```C#
-public class AppState
+public record AppState
 {
-    public ImmutableList<string> Items { get; set; }
-
-    public bool IsFetching { get; set; }
+    public IReadOnlyList<string> Items { get; init; }
+    public bool IsFetching { get; init; }
 }
 ```
-
-Remarks:
-* ImmutableList is recommended when working with lists in the application state as it gives many advantages of immutable operations and help with doing state changes without mutating the original object.
 
 ## Initial state
 We need to define our initial shape of application state. It can be used to prepare the state basing on currently logged in user and data from the database.
 
 ```C#
-public class InitialState : IInitialState<AppState>
+public class AppStateInitializer : IStateInitializer<AppState>
 {
-    public Task<AppState> GetInitialState()
+    public Task<AppState> GetInitialStateAsync()
     {
         var state = new AppState
         {
-            Items = new[] { "Item 1" }.ToImmutableList()
+            Items = new[] { "Item 1" },
+            IsFetching = false
         };
 
         return Task.FromResult(state);
@@ -87,7 +83,7 @@ public class InitialState : IInitialState<AppState>
 ```
 
 ## App.razor
-In the Blazor app entry point (usually app.razor component) we need to wrap existing logic with StoreContainer component in order to initialize the store.
+In the Blazor app entry point (usually App.razor component) we need to wrap existing logic with StoreContainer component in order to initialize the store.
 
 ```razor
 <StoreContainer TState="AppState">
@@ -100,91 +96,62 @@ In the Blazor app entry point (usually app.razor component) we need to wrap exis
 
 Actions describe events that float thorough the system and are handled by state flows and logic flows. State flows change the state and logic flows handle the side effects and are mainly responsible for business logic.
 
-Actions are defined by custom classes or structs which can pass data when needed. The structure of the actions is arbitrary.
+Actions are defined by records which can pass data when needed. The structure of the actions is arbitrary.
 
 ```C#
 public static class Actions
 {
-    public static class LoadItems
+    public record LoadItems
     {
-        public struct Invoke { }
-
-        public struct Request { }
-
-        public struct Success
-        {
-            public string[] Items { get; set; }
-        }
-
-        public struct Failure
-        {
-            public string ErrorMessage { get; set; }
-        }
+        public record Request;
+        public record Success(string[] Items);
+        public record Failure(string ErrorMessage);
     }
 }
 ```
 Remarks:
-* `LoadItems.Invoke` action is to trigger fetching the items from some storage
+* `LoadItems` action is to trigger fetching the items from some storage
 * `LoadItems.Request` action is to inform that the request to get the data has started
 * `LoadItems.Success` action is to inform that getting the data is finished. It contains Items property with retrieved data
 
-## First custom component
+## First state component
 
-Let's create a custom component with access to the `Store` and name it Items.razor. It will show the elements from our state and have a button to load those elements. When the elements are being fetched, the loading indication should be shown.
+Let's create a state component with access to the `Store` and name it `Items.razor`. It will show the elements from our state and have a button to load those elements. When the elements are being fetched, the loading indication should be shown.
 
 We will start with creating the `Items.razor` component:
 
 ```razor
-@inherits StateComponent<AppState, ItemsState>
-
-@functions {
-    Task LoadItems() => Put(new Actions.LoadItems.Invoke());
-}
+@inherits StateComponent<AppState>
 
 <h1>App</h1>
 
-@if (State.IsFetching)
+@if (isFetching)
 {
     <p>Is loading</p>
 }
 else
 {
-    foreach (var item in State.Items)
+    foreach (var item in items)
     {
         <p>item</p>
     }
 
-    <button onclick=@LoadItems>Load items</button>
+    <button onclick="@LoadItems">Load items</button>
 }
-```
 
-Next we need to declare a part of our `AppState` that will be used by this component. We will map `AppState` to `ItemsState` so we will have access to only needed properties. Our component state has to be a `struct` in order to enable shallow comparison for rerendering purposes.
+@code {
+    string[] items;
+    bool isFetching;
 
-> In such a small application like this example a reason for narrowing down the component state might not be visible, but in bigger applications with nice structure the components are small and use only a small part of the main state.
-
-ItemsState.cs:
-```C#
-public struct ItemsState : IStateMap<AppState, ItemsState>
-{
-    public ImmutableList<string> Items { get; set; }
-
-    public bool IsFetching { get; set; }
-
-    public ItemsState Map(AppState state) => new ItemsState
+    void LoadItems() => Put(new Actions.LoadItems());
+    
+    protected override void OnInitialized()
     {
-        Items = state.Items,
-        IsFetching = state.IsFetching
+        UseState(state => items = state.Items);
+        UseState(state => isFetching = state.IsFetching);
     }
 }
 ```
-
-Remarks:
-* Our component inherits from `StateComponent<AppState, ItemsState>`. It's needed in "container" components that have direct access to component state or dispatch actions.
-* Having `StateComponent<AppState, ItemsState>` as a base class gives us access to:
-    - `State` property - our narrowed down component state
-    - `Put` method - method used to dispatch actions
-* The `LoadItems` method is attached to the `Load items` button. Its role is to dispatch an instance of the Actions.LoadItems.Invoke action.
-* `ItemsState.Map` method is called whenever `AppState` changes. Component will be rerendered when the result of that state mapping is different from the previous mapping. Map method has to be [pure](https://en.wikipedia.org/wiki/Pure_function).
 
 ## State flows
 
@@ -193,33 +160,24 @@ State flows are classes providing functionality to change the state accordingly 
 ```C#
 public class ItemsStateFlow : IStateFlow<AppState>
 {
-    public AppState Handle(AppState appState, object actionValue)
+    public AppState Handle(AppState appState, object actionValue) => actionValue switch
     {
-        switch (actionValue)
-        {
-            case Actions.LoadItems.Request _:
-                return appState.With(state => {
-                    state.IsFetching = true;
-                });
+        Actions.LoadItems.Request =>
+            appState with { IsFetching = true },
 
-            case Actions.LoadItems.Success action:
-                return appState.With(state => {
-                    state.IsFetching = false;
-                    state.Items = action.Items.ToImmutableList();
-                });
+        Actions.LoadItems.Success action =>
+            appState with { IsFetching = false, Items = action.Items };
 
-            default:
-                return appState;
-        }
-    }
+        _ => appState
+    };
 }
 ```
 Remarks:
 * State flow has to implement IStateFlow<AppState> where AppState is our application state object type
 * Whenever action is dispatched in the system, the `Handle` method in all the state flows will be called
 * The `Handle` method is responsible for reacting on the actions and changing the state where needed
-* The appState parameter value should be treated as read-only and shouldn't be mutated. Any intent to change the state should create a new copy of the state with that change. Extension method `With` is introduced in order to simplify copying the objects. It performs a shallow copy of an object.
-* There can be many state flows, each responsible for its own area
+* The appState parameter value is a read-only record and can't be mutated. Any intent to change the state should happen by using `with` statement, which creates a new copy of the state with a change.
+* There can be many state flows, each responsible for its own part of the state.
 
 ## Logic Flows
 
@@ -241,7 +199,7 @@ public class ItemsLogicFlow : ILogicFlow
     {
         switch (actionValue)
         {
-            case Actions.LoadItems.Invoke _:
+            case Actions.LoadItems:
                 await LoadItems();
                 break;
         }
@@ -249,16 +207,16 @@ public class ItemsLogicFlow : ILogicFlow
 
     private async Task LoadItems()
     {
-        await _store.Put(new Actions.LoadItems.Request());
+        _store.Put(new Actions.LoadItems.Request());
 
         try
         {
             var result = await _appService.GetItems();
-            await _store.Put(new Actions.LoadItems.Success { Items = result.ToArray() });
+            _store.Put(new Actions.LoadItems.Success { Items = result.ToArray() });
         }
         catch (Exception exception)
         {
-            await _store.Put(new Actions.LoadItems.Failure { ErrorMessage = exception.Message });
+            _store.Put(new Actions.LoadItems.Failure { ErrorMessage = exception.Message });
         }
     }
 }
@@ -267,24 +225,6 @@ public class ItemsLogicFlow : ILogicFlow
 * Logic Flows have to implement `ILogicFlow`
 * The asynchronous OnNext method is responsible for handling the actions and executing corresponding logic
 * During handling one action (LoadItems.Invoke) we can dispatch many other actions, like Request or Success that will be handled by state flows
-
-AppService is an example service that fetches the data from database. For the training purposes we can implement it like below.
-
-```C#
-public interface IAppService
-{
-    Task<IEnumerable<string>> GetItems();
-}
-
-public class AppService : IAppService
-{
-    public async Task<IEnumerable<string>> GetItems()
-    {
-        await Task.Delay(1000);
-        return new[] { "Item1", "Item2" };
-    }
-}
-```
 
 ## Startup
 
@@ -337,4 +277,4 @@ Having the logging middleware enabled, we can observe the dispatched actions tog
 
 ## License
 
-Rudder is Copyright © 2019 Krzysztof Jeske and other contributors under the [MIT license](https://raw.githubusercontent.com/kjeske/rudder/master/LICENSE.txt)
+Rudder is Copyright © 2022 Krzysztof Jeske and other contributors under the [MIT license](https://raw.githubusercontent.com/kjeske/rudder/master/LICENSE.txt)

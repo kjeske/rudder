@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 
 namespace Rudder
 {
@@ -9,46 +7,35 @@ namespace Rudder
     /// </summary>
     /// <typeparam name="TState">Application state type</typeparam>
     /// <typeparam name="TComponentState">Component state type</typeparam>
-    public abstract class StateComponent<TState, TComponentState> : ComponentBase, IDisposable
+    public abstract class StateComponent<TState> : ComponentBase, IDisposable
         where TState : class
-        where TComponentState : struct, IStateMap<TState, TComponentState>
     {
-        private static readonly TComponentState StateMapper = new TComponentState();
-
-        private TComponentState _state;
+        private readonly List<Action> _unsubscribeActions = new();
 
         [Inject]
         private Store<TState> Store { get; set; }
-
-        /// <summary>
-        /// Component state
-        /// </summary>
-        protected ref TComponentState State => ref _state;
 
         /// <summary>
         /// Dispatches an action
         /// </summary>
         /// <typeparam name="T">Action type</typeparam>
         /// <param name="action">Action instance</param>
-        protected Task Put<T>(T action) => Store.Put(action);
+        protected Task PutAsync<T>(T action) => Store.PutAsync(action);
 
-        protected override void OnInitialized()
-        {
-            _state = StateMapper.MapState(Store.State);
-            Store.Subscribe(UpdateState);
-        }
+        /// <summary>
+        /// Dispatches an action
+        /// </summary>
+        /// <typeparam name="T">Action type</typeparam>
+        /// <param name="action">Action instance</param>
+        protected void Put<T>(T action) => Store.Put(action);
 
-        private async Task UpdateState(TState state)
-        {
-            var newState = StateMapper.MapState(state);
+        protected void UseState<T>(Func<TState, T> mapper) =>
+            _unsubscribeActions.Add(Store.Subscribe(mapper, UpdateState));
 
-            if (!newState.Equals(State))
-            {
-                _state = newState;
-                await InvokeAsync(StateHasChanged);
-            }
-        }
+        private void UpdateState() =>
+            Task.Run(() => InvokeAsync(StateHasChanged));
 
-        void IDisposable.Dispose() => Store.Unsubscribe(UpdateState);
+        public void Dispose() =>
+            _unsubscribeActions.ForEach(unsubscribe => unsubscribe());
     }
 }
